@@ -10,6 +10,6 @@ namespace TestDataGenerator.Data
         public string UserLogin { get; set; }
         public string Password { get; set; }
         public string Email { get; set; }
-        public DateTime ReggistrationDate { get; set; }
+        public DateTime RegistrationDate { get; set; }
     }
 }

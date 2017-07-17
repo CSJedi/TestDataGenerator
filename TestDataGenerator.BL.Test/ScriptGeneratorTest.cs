@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 using NUnit.Framework;
-using TestDataGenerator.BL;
 using TestDataGenerator.Data;
 
 namespace TestDataGenerator.BL.Test
@@ -9,10 +7,13 @@ namespace TestDataGenerator.BL.Test
     [TestFixture]
     class ScriptGeneratorTest
     {
-        private IScriptGenerator _generator;
+        private ScriptGenerator _generator;
+
+        [SetUp]
         public void Init()
         {
-            _generator = null;
+            IRepository repository = new RepositoryMock();
+            _generator = new ScriptGenerator(repository);
         }
 
         [Test]
@@ -34,7 +35,6 @@ namespace TestDataGenerator.BL.Test
         [Test]
         public void GenerateUser_EmailRequired()
         {
-   
             UserEntity entity = _generator.GenerateUser();
             string email = entity.Email;
             Assert.That(email, Is.Not.Empty);
@@ -51,17 +51,17 @@ namespace TestDataGenerator.BL.Test
         [Test]
         public void GenerateUser_PasswordRequired()
         {
-            IScriptGenerator generator = null;
-            UserEntity entity = generator.GenerateUser();
+            UserEntity entity = _generator.GenerateUser();
             string password = entity.Password;
             Assert.That(password, Is.Not.Empty);
         }
 
         [Test]
+        [Repeat(1000)]
         public void GenerateUser_RegistrationDatePeriod()
         {
             UserEntity entity = _generator.GenerateUser();
-            DateTime registrationDate = entity.ReggistrationDate;
+            DateTime registrationDate = entity.RegistrationDate;
             Assert.That(registrationDate, Is.InRange(new DateTime(2010, 1, 1), DateTime.Now ));
         }
 
@@ -76,7 +76,7 @@ namespace TestDataGenerator.BL.Test
                 UserLogin = "Vasya",
                 Email = "vasya@gmail.com",
                 Password = "Vasya123",
-                ReggistrationDate = new DateTime(2017, 1, 1)
+                RegistrationDate = new DateTime(2017, 1, 1)
             };
 
             const string EXPECTED_RESULT = @"VALUES ('Vasya', 'Petrov', 'Olegovich', 'vasya@gmail.com', 'Vasya', 'Vasya123', '20170101')";
@@ -90,6 +90,18 @@ namespace TestDataGenerator.BL.Test
             const string EXPECTED_RESULT = @"INSERT INTO BlogUser (Name, Surname, Patronymic, Email, UserLogin, Password, RegistrationDate )";
             string result = _generator.GetInsertLine();
             Assert.That(result, Is.EqualTo(EXPECTED_RESULT));
+        }
+
+        [Test]
+        public void MergeLines_Test()
+        {
+            const string INSERT_LINE = "INSERT LINE";
+            string[] valueLines = { "VALUE LINE 1", "VALUE LINE 2"};
+            string EXPECTED_RESULT = $"INSERT LINE{Environment.NewLine}VALUE LINE 1{Environment.NewLine},VALUE LINE 2{Environment.NewLine}";
+
+            string result = _generator.MergeLines(valueLines, INSERT_LINE);
+            Assert.That(result, Is.EqualTo(EXPECTED_RESULT));
+
         }
     }
 }
